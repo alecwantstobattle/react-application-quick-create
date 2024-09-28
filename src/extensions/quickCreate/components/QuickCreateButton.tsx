@@ -3,15 +3,25 @@ import {
   IContextualMenuItem,
   IContextualMenuProps,
   IIconProps,
+  Panel,
+  PanelType,
 } from "@fluentui/react";
 import { CommandButton } from "@fluentui/react/lib/components/Button/CommandButton/CommandButton";
 import { ListItemService } from "../../../services/ListService";
 import { ApplicationCustomizerContext } from "@microsoft/sp-application-base";
+import { useBoolean } from "@fluentui/react-hooks";
+
+import styles from "./QUickCreateButton.module.scss";
 
 const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
   props
 ) => {
   const [menu, setMenu] = React.useState<IContextualMenuProps>();
+  const [isOpen, { setTrue: openPanel, setFalse: dismissPanel }] =
+    useBoolean(false);
+  const [panelUrl, setPanelUrl] = React.useState<string>("");
+  const [allowURLCheck, setAllowURLCheck] = React.useState<boolean>(true);
+
   const listService = ListItemService(props.context);
 
   const setIconName = (baseTemplateId: number): string => {
@@ -21,7 +31,7 @@ const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
       case 120: // Custom List in Datasheet View
         iconName = "Table";
         break;
-      case 200: // Survey QUestions
+      case 200: // Survey Questions
       case 103: // Links
         iconName = "Link";
         break;
@@ -80,7 +90,7 @@ const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
 
     const menuFromLists: IContextualMenuItem[] = [];
 
-    lists.forEach(async (list) => {
+    for (const list of lists) {
       const items: IContextualMenuItem[] = [];
 
       if (list.ContentTypesEnabled && list.AllowContentTypes) {
@@ -92,7 +102,17 @@ const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
             items?.push({
               key: contentType.StringId,
               text: contentType.Name,
-              iconProps: { iconName: "RegularClipping" },
+              iconProps: { iconName: "RectangularClipping" },
+              onClick: () => {
+                setPanelUrl(
+                  `${props.context.pageContext.web.absoluteUrl}/Lists/${list.Title}/Newform.aspx?${contentType.StringId}`
+                );
+                openPanel();
+                setAllowURLCheck(false);
+                setTimeout(() => {
+                  setAllowURLCheck(true);
+                }, 5000);
+              },
             });
           });
       }
@@ -102,8 +122,21 @@ const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
         text: list.Title,
         iconProps: { iconName: setIconName(list.BaseTemplate) },
         items: items.length > 0 ? items : undefined,
+        onClick:
+          items.length === 0
+            ? () => {
+                setPanelUrl(
+                  `${props.context.pageContext.web.absoluteUrl}/Lists/${list.Title}/Newform.aspx`
+                );
+                openPanel();
+                setAllowURLCheck(false);
+                setTimeout(() => {
+                  setAllowURLCheck(true);
+                }, 5000);
+              }
+            : undefined,
       });
-    });
+    }
 
     setMenu({
       items: menuFromLists,
@@ -116,14 +149,54 @@ const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
     })();
   }, []);
 
+  const handleLoad = (e: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
+    if (allowURLCheck) {
+      const document = (e.target as HTMLIFrameElement).contentWindow?.document;
+
+      if (document?.readyState === "complete") {
+        if (document?.URL !== panelUrl) {
+          dismissPanel();
+        }
+      }
+    }
+  };
+
   const quickCreate: IIconProps = { iconName: "CaloriesAdd" };
 
   return (
-    <CommandButton
-      iconProps={quickCreate}
-      text="List Item Quick Create"
-      menuProps={menu}
-    />
+    <>
+      <CommandButton
+        iconProps={quickCreate}
+        text="List Item Quick Create"
+        menuProps={menu}
+      />
+      <Panel
+        isOpen={isOpen}
+        onDismiss={dismissPanel}
+        type={PanelType.medium}
+        hasCloseButton={false}
+        styles={{
+          scrollableContent: {
+            height: "100%",
+          },
+          commands: {
+            padding: "0px !important",
+          },
+          content: {
+            padding: "0px !important",
+            height: "100%",
+          },
+        }}
+      >
+        <div className={styles.panel}>
+          <iframe
+            className={styles.iframe}
+            src={panelUrl}
+            onLoad={(e) => handleLoad(e)}
+          />
+        </div>
+      </Panel>
+    </>
   );
 };
 
