@@ -105,7 +105,7 @@ const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
               iconProps: { iconName: "RectangularClipping" },
               onClick: () => {
                 setPanelUrl(
-                  `${props.context.pageContext.web.absoluteUrl}/Lists/${list.Title}/Newform.aspx?${contentType.StringId}`
+                  `${props.context.pageContext.web.absoluteUrl}/Lists/${list.Title}/Newform.aspx?${contentType.StringId}&env=Embedded`
                 );
                 openPanel();
                 setAllowURLCheck(false);
@@ -126,7 +126,7 @@ const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
           items.length === 0
             ? () => {
                 setPanelUrl(
-                  `${props.context.pageContext.web.absoluteUrl}/Lists/${list.Title}/Newform.aspx`
+                  `${props.context.pageContext.web.absoluteUrl}/Lists/${list.Title}/Newform.aspx?env=Embedded`
                 );
                 openPanel();
                 setAllowURLCheck(false);
@@ -150,10 +150,11 @@ const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
   }, []);
 
   const handleLoad = (e: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
-    if (allowURLCheck) {
-      const document = (e.target as HTMLIFrameElement).contentWindow?.document;
+    const iframe = e.target as HTMLIFrameElement;
+    const document = iframe.contentWindow?.document;
 
-      if (document?.readyState === "complete") {
+    if (allowURLCheck) {
+      if (document) {
         if (document?.URL !== panelUrl) {
           dismissPanel();
         }
