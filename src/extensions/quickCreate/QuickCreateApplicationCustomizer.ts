@@ -15,7 +15,6 @@ const LOG_SOURCE: string = "QuickCreateApplicationCustomizer";
  */
 export interface IQuickCreateApplicationCustomizerProperties {
   // This is an example; replace with your own property
-  testMessage: string;
 }
 
 /** A Custom Action which can be run during execution of a Client Side Application */
@@ -30,7 +29,7 @@ export default class QuickCreateApplicationCustomizer extends BaseApplicationCus
 
   private renderReactComponent(): void {
     const observer = new MutationObserver(() => {
-      const commandBar = document.querySelector(".ms-CommandBar");
+      const commandBar = document.querySelector("#spCommandBar .ms-CommandBar");
       if (commandBar) {
         observer.disconnect();
         const buttonElement = document.createElement("div");

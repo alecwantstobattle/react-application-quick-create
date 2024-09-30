@@ -2,7 +2,6 @@ import * as React from "react";
 import {
   IContextualMenuItem,
   IContextualMenuProps,
-  IIconProps,
   Panel,
   PanelType,
 } from "@fluentui/react";
@@ -11,6 +10,7 @@ import { ListItemService } from "../../../services/ListService";
 import { ApplicationCustomizerContext } from "@microsoft/sp-application-base";
 import { useBoolean } from "@fluentui/react-hooks";
 
+import { iconProps, panelProps } from "./QuickCreateButton.styles";
 import styles from "./QUickCreateButton.module.scss";
 
 const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
@@ -111,7 +111,7 @@ const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
                 setAllowURLCheck(false);
                 setTimeout(() => {
                   setAllowURLCheck(true);
-                }, 5000);
+                }, 2000);
               },
             });
           });
@@ -132,7 +132,7 @@ const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
                 setAllowURLCheck(false);
                 setTimeout(() => {
                   setAllowURLCheck(true);
-                }, 5000);
+                }, 2000);
               }
             : undefined,
       });
@@ -155,19 +155,19 @@ const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
 
     if (allowURLCheck) {
       if (document) {
-        if (document?.URL !== panelUrl) {
-          dismissPanel();
+        if (document.readyState === "complete") {
+          if (document?.URL !== panelUrl) {
+            dismissPanel();
+          }
         }
       }
     }
   };
 
-  const quickCreate: IIconProps = { iconName: "CaloriesAdd" };
-
   return (
     <>
       <CommandButton
-        iconProps={quickCreate}
+        iconProps={iconProps}
         text="List Item Quick Create"
         menuProps={menu}
       />
@@ -176,18 +176,7 @@ const QuickCreateButton: React.FC<{ context: ApplicationCustomizerContext }> = (
         onDismiss={dismissPanel}
         type={PanelType.medium}
         hasCloseButton={false}
-        styles={{
-          scrollableContent: {
-            height: "100%",
-          },
-          commands: {
-            padding: "0px !important",
-          },
-          content: {
-            padding: "0px !important",
-            height: "100%",
-          },
-        }}
+        styles={panelProps}
       >
         <div className={styles.panel}>
           <iframe
